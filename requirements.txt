@@ -1,0 +1,4 @@
+clipboard
+win10toast
+mcstatus
+colorama
