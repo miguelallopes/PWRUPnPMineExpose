@@ -145,7 +145,7 @@ if __name__ == '__main__':
     init()
     print(Fore.GREEN + '*' * 40 + Fore.RESET)
     print(Fore.GREEN + '*' + Fore.RESET + "PWRUPnPMineExpose".center(38) + Fore.GREEN + '*' + Fore.RESET)
-    print(Fore.GREEN + '*' + Fore.RESET + "by PWRScript, Version 1.00".center(38) + Fore.GREEN + '*' + Fore.RESET)
+    print(Fore.GREEN + '*' + Fore.RESET + "by PWRScript, Version 0.02".center(38) + Fore.GREEN + '*' + Fore.RESET)
     print(Fore.GREEN + '*' * 40 + Fore.RESET)
     sleep(1)
     toast = ToastNotifier()
