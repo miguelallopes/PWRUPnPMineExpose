@@ -8,7 +8,14 @@ DUMMY_DISCOURAGED = "org.chris.portmapper.router.dummy.DummyRouterFactory"
 
 #Config (Modify to your needs)
 RUN_TYPE = 1 # 0 - Interactive Mode, 1 - Smart Mode (Opens ports if minecraft server running, closes inactive open ports)
-PORTMAPPER_USE_LIB = SBBI
+
+NOTIFICATIONS_TIMEOUT = 5
+NOTIFICATIONS_THREADED = False
+
+PORTMAPPER_USE_LIB = SBBI #Change this if ports are not been open (You can test what lib works for you testing opening portmapper.jar)
+
+LAN_AUTOSCAN_DETECTION_TIME = 6.5 #Time to scan for a minecraft lan packet annoucing the server
+LAN_FALLBACK_MODE = True #if your PC can't detect your lan minecraft server turn this to True (close any dedicated server first)
 
 DEDICATED_SERVER_CHECK_PORTS = [25565,40000] # Ports to check for dedicated servers (example: [25565,40000,55689])
 
@@ -38,7 +45,7 @@ def get_ip():
 def method_locate_local_lan_server():
     port = 4445
     bufferSize = 1500
-    timeout = 6.5
+    timeout = LAN_AUTOSCAN_DETECTION_TIME
     MCAST_GRP = "224.0.2.60"
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -87,7 +94,7 @@ def method_locate_local_dedicated_server():
 def get_servers_running():
     print("Trying to detect server automatically (Lan Server Method)... ".center(40), end="")
     method_1_result = method_locate_local_lan_server()
-    print(Fore.GREEN + f"Found at {method_1_result['address']}:{method_1_result['port']}" + Fore.RESET if method_1_result != None else Fore.RED + "Failed" + Fore.RESET)
+    print(Fore.GREEN + f"Found at {method_1_result['address']}:{method_1_result['port']}" + Fore.RESET if method_1_result != None else Fore.RED + "Failed (or maybe your connection type is set to public)" + Fore.RESET)
 
     print("Trying to detect server automatically (Dedicated Server Method)... ".center(40), end="")
     method_2_result = method_locate_local_dedicated_server()
@@ -150,8 +157,38 @@ if __name__ == '__main__':
         #Opens ports if minecraft server running, closes inactive open ports
         method_1_result, method_2_result = get_servers_running()
         if method_1_result == None and method_2_result == None:
-            disable_minecraft_upnp("all")
-            toast.show_toast("PWRUPnPMineExpose [DESACTIVE]","All minecraft server port forwarding roles was disabled from the router", duration=10)
+            port_temp = 0
+            if LAN_FALLBACK_MODE == True:
+                toast.show_toast("PWRUPnPMineExpose [LAN_FALLBACK_MODE]","We need your attention because you enabled LAN_FALLBACK_MODE and we can´t detect any server running on your computer", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
+
+                while not port_temp == None or port_temp != 0:
+                    c = input("In which port are your minecraft lan server (leave blank if you not have any server open)? ")
+
+                    try:
+                        if c.strip() == "" or c.lower() == "none":
+                            port_temp = None
+                            disable_minecraft_upnp("all")
+                            toast.show_toast("PWRUPnPMineExpose [DESACTIVE]","All minecraft server port forwarding roles was disabled from the router", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
+                            break
+
+                        else:
+                            port_temp = int(c)
+                            if port_temp == 0 or port_temp > 65535:
+                                raise ValueError
+                            else:
+                                enable_minecraft_upnp("lan", port_temp)
+                                print(Fore.GREEN + '*' * 40 + Fore.RESET)
+                                print(Fore.GREEN + '*' + Fore.RESET + f"Lan Server:{requests.get('https://api.ipify.org').text}:{LAN_SERVER_UPnP_PORT}".center(38) + Fore.GREEN + '*' + Fore.RESET)
+                                print(Fore.GREEN + '*' * 40 + Fore.RESET)
+                                toast.show_toast("PWRUPnPMineExpose [LAN]","Lan minecraft server port forwarding roles was enabled from the router", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
+                                clipboard.copy("*" * 40 + "\n" + "*" + "PWRUPnPMineExpose by PWRScript".center(38) + "*" + "\n" + "*" + f"Lan Server: {requests.get('https://api.ipify.org').text}:{LAN_SERVER_UPnP_PORT}".center(38) + "*" + "\n" + "*" * 40)
+                                break
+
+                    except ValueError:
+                        print(Fore.RED + f"Error: Value must be a port between 1 and 65535 or None"+ Fore.RESET)
+            else:
+                disable_minecraft_upnp("all")
+                toast.show_toast("PWRUPnPMineExpose [DESACTIVE]","All minecraft server port forwarding roles was disabled from the router", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
 
         elif method_1_result != None and method_2_result != None:
             enable_minecraft_upnp("all",int(method_1_result["port"]),int(method_2_result["port"]))
@@ -159,7 +196,7 @@ if __name__ == '__main__':
             print(Fore.GREEN + '*' + Fore.RESET + f"Dedicated Server: {requests.get('https://api.ipify.org').text}:{DEDICATED_SERVER_UPnP_PORT}".center(38) + Fore.GREEN + '*' + Fore.RESET)
             print(Fore.GREEN + '*' + Fore.RESET + f"Lan Server:{requests.get('https://api.ipify.org').text}:{LAN_SERVER_UPnP_PORT}".center(38) + Fore.GREEN + '*' + Fore.RESET)
             print(Fore.GREEN + '*' * 40 + Fore.RESET)
-            toast.show_toast("PWRUPnPMineExpose [ACTIVE]", "All minecraft server port forwarding roles was enabled from the router",duration=10)
+            toast.show_toast("PWRUPnPMineExpose [ACTIVE]", "All minecraft server port forwarding roles was enabled from the router", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
             clipboard.copy("*" * 40 + "\n" + "*" + "PWRUPnPMineExpose by PWRScript".center(38) + "*" + "\n" + "*" + f"Lan Server: {requests.get('https://api.ipify.org').text}:{LAN_SERVER_UPnP_PORT}".center(38) + "*" + "\n"+ "*" + f"Dedicated Server: {requests.get('https://api.ipify.org').text}:{DEDICATED_SERVER_UPnP_PORT}".center(38) + "*" + "\n" + "*" * 40)
 
         elif method_1_result != None:
@@ -168,7 +205,7 @@ if __name__ == '__main__':
             print(Fore.GREEN + '*' * 40 + Fore.RESET)
             print(Fore.GREEN + '*' + Fore.RESET + f"Lan Server:{requests.get('https://api.ipify.org').text}:{LAN_SERVER_UPnP_PORT}".center(38) + Fore.GREEN + '*' + Fore.RESET)
             print(Fore.GREEN + '*' * 40 + Fore.RESET)
-            toast.show_toast("PWRUPnPMineExpose [LAN]","Lan minecraft server port forwarding roles was enabled from the router",duration=10)
+            toast.show_toast("PWRUPnPMineExpose [LAN]","Lan minecraft server port forwarding roles was enabled from the router", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
             clipboard.copy("*" * 40 + "\n" + "*" + "PWRUPnPMineExpose by PWRScript".center(38) + "*" + "\n" + "*" + f"Lan Server: {requests.get('https://api.ipify.org').text}:{LAN_SERVER_UPnP_PORT}".center(38) + "*" + "\n" + "*" * 40)
 
         elif method_2_result != None:
@@ -177,6 +214,7 @@ if __name__ == '__main__':
             print(Fore.GREEN + '*' * 40 + Fore.RESET)
             print(Fore.GREEN + '*' + Fore.RESET + f"Dedicated Server: {requests.get('https://api.ipify.org').text}:{DEDICATED_SERVER_UPnP_PORT}".center(38) + Fore.GREEN + '*' + Fore.RESET)
             print(Fore.GREEN + '*' * 40 + Fore.RESET)
-            toast.show_toast("PWRUPnPMineExpose [DEDICATED]","Dedicated minecraft server port forwarding roles was enabled from the router",duration=10)
+            toast.show_toast("PWRUPnPMineExpose [DEDICATED]","Dedicated minecraft server port forwarding roles was enabled from the router", duration=NOTIFICATIONS_TIMEOUT, threaded=NOTIFICATIONS_THREADED)
             clipboard.copy("*" * 40 + "\n" + "*" + "PWRUPnPMineExpose by PWRScript".center(38) + "*" + "\n" + "*" + f"Dedicated Server: {requests.get('https://api.ipify.org').text}:{DEDICATED_SERVER_UPnP_PORT}".center(38) + "*" + "\n" + "*" * 40)
     input("Press enter to continue... ")
+    quit(0)
