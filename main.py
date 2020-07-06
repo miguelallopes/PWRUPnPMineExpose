@@ -15,18 +15,18 @@ NOTIFICATIONS_THREADED = False
 PORTMAPPER_USE_LIB = SBBI #Change this if ports are not been open (You can test what lib works for you testing opening portmapper.jar)
 
 LAN_AUTOSCAN_DETECTION_TIME = 6.5 #Time to scan for a minecraft lan packet annoucing the server
-LAN_FALLBACK_MODE = True #if your PC can't detect your lan minecraft server turn this to True (close any dedicated server first)
+LAN_FALLBACK_MODE = False #if your PC can't detect your lan minecraft server turn this to True (close any dedicated server first)
 
-DEDICATED_SERVER_CHECK_PORTS = [25565,40000] # Ports to check for dedicated servers (example: [25565,40000,55689])
+DEDICATED_SERVER_CHECK_PORTS = [25565] # Ports to check for dedicated servers (example: [25565,40000,55689])
 
 DEDICATED_SERVER_UPnP_PORT = 52050 # Port to open via UPnP on router for dedicated servers (example: 52050)
 LAN_SERVER_UPnP_PORT = 62050 # Port to open via UPnP on router for lan servers (example: 62050)
 
 #Imported Libraries
-import os, socket,struct,time,select,re,subprocess,pip._vendor.requests as requests, clipboard
+import socket,struct,time,select,re,subprocess,pip._vendor.requests as requests, clipboard
 from win10toast import ToastNotifier
 from mcstatus import MinecraftServer
-from colorama import init, Fore, Back, Style
+from colorama import init, Fore
 from time import sleep
 
 #Function on https://stackoverflow.com/a/28950776
